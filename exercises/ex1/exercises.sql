@@ -214,3 +214,26 @@ HAVING count(customer.customer_name) >= ALL (SELECT count(customer.customer_name
                                                   account.account_number = depositor.account_number AND
                                                   depositor.customer_name = customer.customer_name
                                             GROUP BY branch.branch_city);
+
+#m
+SELECT branch.branch_name
+FROM branch, account
+WHERE branch.branch_name = account.branch_name
+GROUP BY branch_name
+HAVING SUM(account.balance) >= ALL (SELECT sum(balance)
+                                    FROM branch, account
+                                    WHERE account.branch_name = branch.branch_name
+                                    GROUP BY branch.branch_name);
+#n
+SELECT name
+FROM(SELECT c.customer_name as name, c.customer_city
+    FROM customer c, depositor d, account a, branch b
+    WHERE c.customer_name = d.customer_name AND
+        d.account_number = a.account_number AND
+        a.branch_name = b.branch_name AND
+        b.branch_city = c.customer_city /* clients who have accounts in branches that are in their city */
+    GROUP BY c.customer_name
+    HAVING COUNT(DISTINCT b.branch_name) = (SELECT count(branch_name)
+                      FROM branch b2
+                      WHERE c.customer_city = b2.branch_city
+                      GROUP BY branch_city)) AS t;
