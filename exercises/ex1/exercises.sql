@@ -185,4 +185,32 @@ FROM customer, borrower
 WHERE customer.customer_name = borrower.customer_name
 GROUP BY customer_name
 HAVING count(borrower.loan_number) > 2
-ORDER BY customer.customer_name
+ORDER BY customer.customer_name;
+
+#k
+SELECT count(DISTINCT customer.customer_name) as num_clients
+FROM branch, account, depositor, customer, borrower, loan
+WHERE branch.branch_name = account.branch_name AND
+      account.account_number = depositor.account_number AND
+      depositor.customer_name = customer.customer_name AND
+      customer.customer_name = borrower.customer_name AND
+      borrower.loan_number = loan.loan_number AND
+      branch.branch_city = 'Brooklyn' AND
+      loan.branch_name IN (SELECT branch.branch_name
+              FROM branch, loan
+                            WHERE branch.branch_name = loan.branch_name AND
+                            branch.branch_city = 'Brooklyn');
+
+#l
+SELECT branch.branch_city
+FROM branch, account, depositor, customer
+WHERE branch.branch_name = account.branch_name AND
+      account.account_number = depositor.account_number AND
+      depositor.customer_name = customer.customer_name
+GROUP BY branch.branch_city
+HAVING count(customer.customer_name) >= ALL (SELECT count(customer.customer_name) /* number of customers per city */
+                                            FROM branch, account, depositor, customer
+                                            WHERE branch.branch_name = account.branch_name AND
+                                                  account.account_number = depositor.account_number AND
+                                                  depositor.customer_name = customer.customer_name
+                                            GROUP BY branch.branch_city);
