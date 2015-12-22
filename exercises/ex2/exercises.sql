@@ -86,3 +86,21 @@ SELECT b1.branch_name
 FROM branch b1, branch b2
 GROUP BY b1.branch_name
 HAVING MIN(balance_diff(b1.branch_name, b2.branch_name)) = 0;
+
+#2
+
+#a
+DELIMITER //
+CREATE TRIGGER remove_assoc AFTER UPDATE ON loan
+FOR EACH ROW  # for each updated row
+BEGIN
+    IF NEW.amount <= 0 THEN
+        DELETE FROM borrower WHERE borrower.loan_number = NEW.loan_number;
+        
+        UPDATE branch
+        SET branch.assets = branch.assets - NEW.amount
+        WHERE branch.branch_name = NEW.branch_name;
+    END IF;
+
+END //
+DELIMITER ;
